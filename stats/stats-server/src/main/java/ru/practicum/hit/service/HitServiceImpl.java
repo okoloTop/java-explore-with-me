@@ -31,7 +31,7 @@ public class HitServiceImpl implements HitService {
         if (unique) {
             return statsRepository.calculateUniqueStats(uris, start, end);
         } else if (uris == null) {
-            return statsRepository.calculateStats(null, start, end);
+            return statsRepository.calculateStats(start, end);
         } else {
             return statsRepository.calculateStatsWithUri(uris, start, end);
         }
