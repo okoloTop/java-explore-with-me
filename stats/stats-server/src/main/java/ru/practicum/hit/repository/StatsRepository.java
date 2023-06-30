@@ -21,7 +21,7 @@ public interface StatsRepository extends JpaRepository<Hit, Long> {
             "WHERE uri IN :uris AND (timestamp >= :start AND timestamp <= :end) GROUP BY (app, uri)" +
             "ORDER BY COUNT(uri) DESC"
     )
-    List<ViewStatsDto> calculateStatsWithUry(List<String> uris, LocalDateTime start, LocalDateTime end);
+    List<ViewStatsDto> calculateStatsWithUri(List<String> uris, LocalDateTime start, LocalDateTime end);
 
     @Query("SELECT new ru.practicum.stats.dto.ViewStatsDto(app, uri, COUNT(ip))" +
             "FROM Hit " +

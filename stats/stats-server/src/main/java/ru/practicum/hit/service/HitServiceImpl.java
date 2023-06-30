@@ -33,7 +33,7 @@ public class HitServiceImpl implements HitService {
         } else if (uris == null) {
             return statsRepository.calculateStats(null, start, end);
         } else {
-            return statsRepository.calculateStatsWithUry(uris, start, end);
+            return statsRepository.calculateStatsWithUri(uris, start, end);
         }
     }
 }
