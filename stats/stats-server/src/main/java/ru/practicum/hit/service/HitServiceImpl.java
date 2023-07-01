@@ -30,10 +30,10 @@ public class HitServiceImpl implements HitService {
     public List<ViewStatsDto> findStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         if (unique) {
             return statsRepository.calculateUniqueStats(uris, start, end);
-        } else if (uris == null) {
-            return statsRepository.calculateStats(start, end);
-        } else {
+        } else if (uris != null) {
             return statsRepository.calculateStatsWithUri(uris, start, end);
+        } else {
+            return statsRepository.calculateStats(start, end);
         }
     }
 }
