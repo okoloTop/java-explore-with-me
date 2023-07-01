@@ -9,25 +9,27 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface StatsRepository extends JpaRepository<Hit, Long> {
-    @Query("SELECT new ru.practicum.stats.dto.ViewStatsDto(app, uri, COUNT(DISTINCT ip)) " +
-            "FROM Hit " +
-            "WHERE uri IN :uris AND (timestamp >= :start AND timestamp < :end) GROUP BY (app, uri)" +
-            "ORDER BY COUNT(uri) DESC"
-    )
-    List<ViewStatsDto> calculateUniqueStats(List<String> uris, LocalDateTime start, LocalDateTime end);
+    @Query(value = ""
+            + "SELECT new ru.practicum.stats.dto.ViewStatsDto(hit.uri, hit.app, COUNT(DISTINCT hit.ip)) "
+            + "FROM Hit hit "
+            + "WHERE hit.uri IN ?3 AND hit.timestamp BETWEEN ?1 AND ?2 "
+            + "GROUP BY hit.uri, hit.app "
+            + "ORDER BY COUNT(DISTINCT hit.ip) DESC")
+    List<ViewStatsDto> calculateUniqueStats(LocalDateTime start, LocalDateTime end, List<String> uris);
 
-    @Query("SELECT new ru.practicum.stats.dto.ViewStatsDto(app, uri, COUNT(ip)) " +
-            "FROM Hit " +
-            "WHERE uri IN :uris AND (timestamp >= :start AND timestamp <= :end) GROUP BY (app, uri)" +
-            "ORDER BY COUNT(uri) DESC"
-    )
-    List<ViewStatsDto> calculateStatsWithUri(List<String> uris, LocalDateTime start, LocalDateTime end);
+    @Query(value = ""
+            + "SELECT new ru.practicum.stats.dto.ViewStatsDto(hit.uri, hit.app, COUNT(hit.ip)) "
+            + "FROM Hit hit "
+            + "WHERE hit.uri IN ?3 AND hit.timestamp BETWEEN ?1 AND ?2 "
+            + "GROUP BY hit.uri, hit.app "
+            + "ORDER BY COUNT(hit.ip) DESC")
+    List<ViewStatsDto> calculateStatsWithUri(LocalDateTime start, LocalDateTime end, List<String> uris);
 
-    @Query("SELECT new ru.practicum.stats.dto.ViewStatsDto(app, uri, COUNT(ip))" +
-            "FROM Hit " +
-            "GROUP BY (app, uri)" +
-            "ORDER BY COUNT(uri) DESC"
-    )
-    List<ViewStatsDto> calculateStats(LocalDateTime start, LocalDateTime end);
-
+    @Query(value = ""
+            + "SELECT new ru.practicum.stats.dto.ViewStatsDto(hit.uri, hit.app, COUNT(hit.ip)) "
+            + "FROM Hit hit "
+            + "WHERE hit.timestamp BETWEEN ?1 AND ?2 "
+            + "GROUP BY hit.uri, hit.app "
+            + "ORDER BY COUNT(hit.ip) DESC")
+    List<ViewStatsDto> calculateStats(LocalDateTime start, LocalDateTime end, List<String> uris);
 }
