@@ -1,4 +1,4 @@
-package ru.practicum.evm.error.model;
+package ru.practicum.evm.error;
 
 import lombok.*;
 

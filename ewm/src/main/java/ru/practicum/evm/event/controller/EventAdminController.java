@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.evm.event.dto.LongEventDto;
 import ru.practicum.evm.event.dto.UpdateEventAdminDto;
 import ru.practicum.evm.event.enums.EventState;
+import ru.practicum.evm.event.model.SearchEventParams;
 import ru.practicum.evm.event.service.EventService;
 
 import javax.validation.Valid;
@@ -26,7 +27,17 @@ public class EventAdminController {
                                         @RequestParam(required = false) String rangeStart,
                                         @RequestParam(required = false) List<Long> users,
                                         @RequestParam(required = false) String rangeEnd) {
-        return eventService.getEventsWithParamsByAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
+        SearchEventParams eventParams = SearchEventParams.builder()
+                .size(size)
+                .from(from)
+                .categories(categories)
+                .states(states)
+                .rangeStart(rangeStart)
+                .rangeEnd(rangeEnd)
+                .users(users)
+                .build();
+
+        return eventService.getEventsWithParamsByAdmin(eventParams);
     }
 
     @PatchMapping("/events/{eventId}")

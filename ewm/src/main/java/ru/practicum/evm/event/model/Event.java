@@ -1,8 +1,6 @@
 package ru.practicum.evm.event.model;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.Hibernate;
 import ru.practicum.evm.category.model.Category;
 import ru.practicum.evm.event.enums.EventState;
@@ -12,19 +10,18 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import static java.util.Objects.requireNonNullElse;
-import static java.util.Objects.requireNonNullElseGet;
 import static javax.persistence.CascadeType.ALL;
 import static javax.persistence.EnumType.STRING;
 import static javax.persistence.GenerationType.IDENTITY;
 import static lombok.AccessLevel.PROTECTED;
-import static ru.practicum.evm.event.enums.EventState.PENDING;
 
 @Entity
+@Builder
 @Getter
 @Setter
 @Table(name = "events", schema = "public")
 @NoArgsConstructor(access = PROTECTED)
+@AllArgsConstructor
 public class Event {
 
     @Id
@@ -37,8 +34,9 @@ public class Event {
     @Column(name = "confirmed_requests")
     private int confirmedRequests;
 
-    @Column(name = "created_on")
-    private LocalDateTime createdOn;
+    @Builder.Default
+    @Column(name = "created_on", nullable = false)
+    private LocalDateTime createdOn = LocalDateTime.now();
 
     @Column(name = "description", length = 7000)
     private String description;
@@ -67,52 +65,20 @@ public class Event {
     @Column(name = "published_on")
     private LocalDateTime publishedOn;
 
-    @Column(name = "request_moderation")
-    private Boolean requestModeration;
+    @Builder.Default
+    @Column(name = "request_moderation", nullable = false)
+    private Boolean requestModeration = true;
 
+    @Builder.Default
     @Enumerated(STRING)
-    @Column(name = "state")
-    private EventState state;
+    @Column(name = "state", nullable = false)
+    private EventState state = EventState.PENDING;
 
     @Column(name = "title")
     private String title;
 
     @Column(name = "views")
     private Long views;
-
-    public Event(Long id,
-                 String annotation,
-                 Category category,
-                 int confirmedRequests,
-                 LocalDateTime createdOn,
-                 String description,
-                 LocalDateTime eventDate,
-                 User initiator,
-                 Location location,
-                 Boolean paid,
-                 int participantLimit,
-                 LocalDateTime publishedOn,
-                 Boolean requestModeration,
-                 EventState eventState,
-                 String title,
-                 Long views) {
-        this.requestModeration = requireNonNullElse(requestModeration, true);
-        this.createdOn = requireNonNullElseGet(createdOn, LocalDateTime::now);
-        this.state = requireNonNullElse(eventState, PENDING);
-        this.confirmedRequests = confirmedRequests;
-        this.participantLimit = participantLimit;
-        this.description = description;
-        this.annotation = annotation;
-        this.publishedOn = publishedOn;
-        this.eventDate = eventDate;
-        this.initiator = initiator;
-        this.category = category;
-        this.location = location;
-        this.title = title;
-        this.views = views;
-        this.paid = paid;
-        this.id = id;
-    }
 
     @Override
     public boolean equals(Object o) {

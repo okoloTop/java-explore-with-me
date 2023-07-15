@@ -1,8 +1,7 @@
 package ru.practicum.evm.event.service;
 
 import ru.practicum.evm.event.dto.*;
-import ru.practicum.evm.event.enums.EventState;
-import ru.practicum.evm.event.enums.SortValue;
+import ru.practicum.evm.event.model.SearchEventParams;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -28,22 +27,8 @@ public interface EventService {
     LongEventDto getEvent(Long id,
                           HttpServletRequest request);
 
-    List<LongEventDto> getEventsWithParamsByAdmin(List<Long> users,
-                                                  EventState states,
-                                                  List<Long> categoriesId,
-                                                  String rangeStart,
-                                                  String rangeEnd,
-                                                  Integer from,
-                                                  Integer size);
+    List<LongEventDto> getEventsWithParamsByAdmin(SearchEventParams eventParams);
 
-    List<LongEventDto> getEventsWithParamsByUser(String text,
-                                                 List<Long> categories,
-                                                 Boolean paid,
-                                                 String rangeStart,
-                                                 String rangeEnd,
-                                                 Boolean onlyAvailable,
-                                                 SortValue sort,
-                                                 Integer from,
-                                                 Integer size,
+    List<LongEventDto> getEventsWithParamsByUser(SearchEventParams eventParams,
                                                  HttpServletRequest request);
 }

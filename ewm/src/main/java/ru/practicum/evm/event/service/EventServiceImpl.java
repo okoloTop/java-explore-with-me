@@ -7,14 +7,13 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.evm.category.exception.CategoryNotExistException;
 import ru.practicum.evm.category.repository.CategoryRepository;
 import ru.practicum.evm.event.dto.*;
-import ru.practicum.evm.event.model.Event;
-import ru.practicum.evm.event.enums.EventState;
-import ru.practicum.evm.event.enums.SortValue;
 import ru.practicum.evm.event.exception.EventCanceledException;
 import ru.practicum.evm.event.exception.EventNotExistException;
 import ru.practicum.evm.event.exception.EventPublishedException;
 import ru.practicum.evm.event.exception.EventWrongTimeException;
 import ru.practicum.evm.event.mapper.EventMapper;
+import ru.practicum.evm.event.model.Event;
+import ru.practicum.evm.event.model.SearchEventParams;
 import ru.practicum.evm.event.repository.EventRepository;
 import ru.practicum.evm.user.exception.UserNotExistException;
 import ru.practicum.evm.user.repository.UserRepository;
@@ -67,6 +66,9 @@ public class EventServiceImpl implements EventService {
 
         var event = eventMapper.toEvent(newEventDto);
         event.setCategory(category);
+
+        if (newEventDto.getRequestModeration() == null)
+            event.setRequestModeration(true);
 
         var user = userRepository.findById(userId).orElseThrow(
                 () -> new UserNotExistException("Пользователь#" + userId + " не существует"));
@@ -221,41 +223,35 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<LongEventDto> getEventsWithParamsByAdmin(List<Long> users,
-                                                         EventState states,
-                                                         List<Long> categories,
-                                                         String rangeStart,
-                                                         String rangeEnd,
-                                                         Integer from,
-                                                         Integer size) {
+    public List<LongEventDto> getEventsWithParamsByAdmin(SearchEventParams eventParams) {
         var builder = entityManager.getCriteriaBuilder();
         var query = builder.createQuery(Event.class);
         var root = query.from(Event.class);
         var criteria = builder.conjunction();
 
-        var start = rangeStart == null ? null : parse(rangeStart, ofPattern(Patterns.DATE_PATTERN));
-        var end = rangeEnd == null ? null : parse(rangeEnd, ofPattern(Patterns.DATE_PATTERN));
+        var start = eventParams.getRangeStart() == null ? null : parse(eventParams.getRangeStart(), ofPattern(Patterns.DATE_PATTERN));
+        var end = eventParams.getRangeEnd() == null ? null : parse(eventParams.getRangeEnd(), ofPattern(Patterns.DATE_PATTERN));
 
-        if (rangeStart != null)
+        if (eventParams.getRangeStart() != null)
             criteria = builder.and(criteria, builder.greaterThanOrEqualTo(root.get("eventDate").as(LocalDateTime.class), start));
 
-        if (rangeEnd != null)
+        if (eventParams.getRangeEnd() != null)
             criteria = builder.and(criteria, builder.lessThanOrEqualTo(root.get("eventDate").as(LocalDateTime.class), end));
 
-        if (categories != null && categories.size() > 0)
-            criteria = builder.and(criteria, root.get("category").in(categories));
+        if (eventParams.getCategories() != null && eventParams.getCategories().size() > 0)
+            criteria = builder.and(criteria, root.get("category").in(eventParams.getCategories()));
 
-        if (users != null && users.size() > 0)
-            criteria = builder.and(criteria, root.get("initiator").in(users));
+        if (eventParams.getUsers() != null && eventParams.getUsers().size() > 0)
+            criteria = builder.and(criteria, root.get("initiator").in(eventParams.getUsers()));
 
-        if (states != null)
-            criteria = builder.and(criteria, root.get("state").in(states));
+        if (eventParams.getStates() != null)
+            criteria = builder.and(criteria, root.get("state").in(eventParams.getStates()));
 
         query.select(root).where(criteria);
 
         var events = entityManager.createQuery(query)
-                .setFirstResult(from)
-                .setMaxResults(size)
+                .setFirstResult(eventParams.getFrom())
+                .setMaxResults(eventParams.getSize())
                 .getResultList();
 
         if (events.size() == 0) return new ArrayList<>();
@@ -264,15 +260,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<LongEventDto> getEventsWithParamsByUser(String text,
-                                                        List<Long> categories,
-                                                        Boolean paid,
-                                                        String rangeStart,
-                                                        String rangeEnd,
-                                                        Boolean available,
-                                                        SortValue sort,
-                                                        Integer from,
-                                                        Integer size,
+    public List<LongEventDto> getEventsWithParamsByUser(SearchEventParams eventParams,
                                                         HttpServletRequest request) {
 
         var builder = entityManager.getCriteriaBuilder();
@@ -281,49 +269,49 @@ public class EventServiceImpl implements EventService {
         var criteria = builder.conjunction();
 
 
-        var start = rangeStart == null ? null : parse(rangeStart, ofPattern(Patterns.DATE_PATTERN));
-        var end = rangeEnd == null ? null : parse(rangeEnd, ofPattern(Patterns.DATE_PATTERN));
+        var start = eventParams.getRangeStart() == null ? null : parse(eventParams.getRangeStart(), ofPattern(Patterns.DATE_PATTERN));
+        var end = eventParams.getRangeEnd() == null ? null : parse(eventParams.getRangeEnd(), ofPattern(Patterns.DATE_PATTERN));
         if (start != null && end != null) {
             checkEventDate(start, end);
         }
-        if (text != null) {
+        if (eventParams.getText() != null) {
             criteria = builder.and(criteria, builder.or(
                     builder.like(
-                            builder.lower(root.get("annotation")), "%" + text.toLowerCase() + "%"),
+                            builder.lower(root.get("annotation")), "%" + eventParams.getText().toLowerCase() + "%"),
                     builder.like(
-                            builder.lower(root.get("description")), "%" + text.toLowerCase() + "%")));
+                            builder.lower(root.get("description")), "%" + eventParams.getText().toLowerCase() + "%")));
         }
 
-        if (categories != null && categories.size() > 0)
-            criteria = builder.and(criteria, root.get("category").in(categories));
+        if (eventParams.getCategories() != null && eventParams.getCategories().size() > 0)
+            criteria = builder.and(criteria, root.get("category").in(eventParams.getCategories()));
 
-        if (paid != null) {
+        if (eventParams.getPaid() != null) {
             Predicate predicate;
-            if (paid) predicate = builder.isTrue(root.get("paid"));
+            if (eventParams.getPaid()) predicate = builder.isTrue(root.get("paid"));
             else predicate = builder.isFalse(root.get("paid"));
             criteria = builder.and(criteria, predicate);
         }
 
-        if (rangeEnd != null)
+        if (eventParams.getRangeEnd() != null)
             criteria = builder.and(criteria, builder.lessThanOrEqualTo(root.get("eventDate").as(LocalDateTime.class), end));
 
-        if (rangeStart != null)
+        if (eventParams.getRangeStart() != null)
             criteria = builder.and(criteria, builder.greaterThanOrEqualTo(root.get("eventDate").as(LocalDateTime.class), start));
 
         query.select(root).where(criteria).orderBy(builder.asc(root.get("eventDate")));
 
         var events = entityManager.createQuery(query)
-                .setFirstResult(from)
-                .setMaxResults(size)
+                .setFirstResult(eventParams.getFrom())
+                .setMaxResults(eventParams.getSize())
                 .getResultList();
 
-        if (available)
+        if (eventParams.getOnlyAvailable())
             events = events.stream()
                     .filter((event -> event.getConfirmedRequests() < (long) event.getParticipantLimit()))
                     .collect(toList());
 
-        if (sort != null) {
-            if (EVENT_DATE.equals(sort))
+        if (eventParams.getSort() != null) {
+            if (EVENT_DATE.equals(eventParams.getSort()))
                 events = events.stream()
                         .sorted(comparing(Event::getEventDate))
                         .collect(toList());

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.evm.event.dto.LongEventDto;
 import ru.practicum.evm.event.enums.SortValue;
+import ru.practicum.evm.event.model.SearchEventParams;
 import ru.practicum.evm.event.service.EventService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +32,17 @@ public class EventPublicController {
                                                         @RequestParam(required = false) Boolean paid,
                                                         @RequestParam(required = false) String text,
                                                         HttpServletRequest request) {
-        return eventService.getEventsWithParamsByUser(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, request);
+        SearchEventParams eventParams = SearchEventParams.builder()
+                .size(size)
+                .from(from)
+                .categories(categories)
+                .onlyAvailable(onlyAvailable)
+                .rangeStart(rangeStart)
+                .rangeEnd(rangeEnd)
+                .sort(sort)
+                .paid(paid)
+                .text(text)
+                .build();
+        return eventService.getEventsWithParamsByUser(eventParams, request);
     }
 }
