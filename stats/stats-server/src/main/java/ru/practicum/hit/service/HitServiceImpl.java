@@ -3,6 +3,7 @@ package ru.practicum.hit.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.hit.exeption.WrongRequestDataException;
 import ru.practicum.hit.mapper.HitMapper;
 import ru.practicum.hit.mapper.ViewStatsMapper;
 import ru.practicum.hit.model.Hit;
@@ -34,6 +35,8 @@ public class HitServiceImpl implements HitService {
                                         LocalDateTime end,
                                         List<String> uris,
                                         boolean unique) {
+       if (start.isAfter(end))
+            throw new WrongRequestDataException("Неверные даты запроса");
         List<ViewStats> hits;
 
         if (unique)
