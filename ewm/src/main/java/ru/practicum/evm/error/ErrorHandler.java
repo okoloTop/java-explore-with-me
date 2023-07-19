@@ -1,7 +1,5 @@
 package ru.practicum.evm.error;
 
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -11,6 +9,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.practicum.evm.category.exception.CategoryNotEmptyException;
 import ru.practicum.evm.category.exception.CategoryNotExistException;
+import ru.practicum.evm.comment.exception.CommentNotExistException;
+import ru.practicum.evm.comment.exception.UsernameInCommentException;
 import ru.practicum.evm.compilation.exception.CompilationNotExistException;
 import ru.practicum.evm.event.exception.*;
 import ru.practicum.evm.request.exception.RequestConfirmedException;
@@ -26,7 +26,6 @@ import static java.time.LocalDateTime.now;
 import static java.time.format.DateTimeFormatter.ofPattern;
 import static org.springframework.http.HttpStatus.*;
 
-@Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 public class ErrorHandler {
 
@@ -245,6 +244,30 @@ public class ErrorHandler {
         return Error.builder()
                 .status(INTERNAL_SERVER_ERROR.getReasonPhrase().toUpperCase())
                 .reason("Unknown error")
+                .message(exception.getMessage())
+                .timestamp(now().format(ofPattern(Patterns.DATE_PATTERN)))
+                .build();
+    }
+
+
+    @ExceptionHandler
+    @ResponseStatus(NOT_FOUND)
+    public Error handleCommentNotExistException(final CommentNotExistException exception) {
+        return Error.builder()
+                .status(NOT_FOUND.getReasonPhrase().toUpperCase())
+                .reason("This comment does not exist")
+                .message(exception.getMessage())
+                .timestamp(now().format(ofPattern(Patterns.DATE_PATTERN)))
+                .build();
+    }
+
+
+    @ExceptionHandler
+    @ResponseStatus(CONFLICT)
+    public Error handleUserNameExistException(final UsernameInCommentException exception) {
+        return Error.builder()
+                .status(CONFLICT.getReasonPhrase().toUpperCase())
+                .reason("This username is already exist")
                 .message(exception.getMessage())
                 .timestamp(now().format(ofPattern(Patterns.DATE_PATTERN)))
                 .build();
